@@ -18,6 +18,7 @@ ARG="$*"
 MD5=`echo "$ARG" | md5sum`
 MD5=${MD5:0:15}
 
+
 SCR=$(screen -ls | /bin/grep "mosh-$MD5.*(Detached)" | head -n 1)
 
 if [ -n "$SCR" ]; then
@@ -35,6 +36,7 @@ fi
 
 	screen -dmS "mosh-$MD5" sh -c "mosh $(echo "$@")"
 ) &
+
 
 if [ -n "$PID" ]; then
 	screen -r "$PID"
