@@ -1,0 +1,43 @@
+#!/bin/bash
+
+
+###############################################################
+## Session caching module for Mosh 2                         ##
+##                                                           ##
+## Developed by Varun Agrawal (Varun@VarunAgw.com)           ##
+###############################################################
+
+
+if [ "--h" == "$*" ] || [ "--help" == "$*" ] || [ -z "$*" ] ; then
+	mosh
+	exit
+fi
+
+
+ARG="$*"
+MD5=`echo "$ARG" | md5sum`
+MD5=${MD5:0:15}
+
+SCR=$(screen -ls | /bin/grep "mosh-$MD5.*(Detached)" | head -n 1)
+
+if [ -n "$SCR" ]; then
+	PID=`echo "$SCR" | grep -Po "[0-9]*\.mosh-[^\t]*"`
+fi
+
+(
+	# Clean old detached session
+	DETACHED=$(screen -ls | /bin/grep "mosh-$MD5.*(Detached)" | tail -n +2)
+	DETACHED=`echo "$DETACHED" | grep -Po "[0-9]*\.mosh-[^\t]*"`
+	DETACHED=($DETACHED)
+	for i in "${DETACHED[@]}"; do
+		screen -X -S $i quit
+	done
+
+	screen -dmS "mosh-$MD5" sh -c "mosh $(echo "$@")"
+) &
+
+if [ -n "$PID" ]; then
+	screen -r "$PID"
+else
+	mosh "$@"
+fi

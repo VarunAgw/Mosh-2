@@ -1,0 +1,130 @@
+#!/bin/bash
+
+
+###############################################################
+## Mosh 2: Alternative frontend for Mosh                     ##
+##                                                           ##
+## Developed by Varun Agrawal (Varun@VarunAgw.com)           ##
+###############################################################
+
+
+show_help() {
+	echo -e "Alternative frontend for MOSH by Varun Agrawal (www.VarunAgw.com)"
+	echo -e "Usage: $0 [user@]host [mosh-options] [ssh-options]"
+	echo -e ""
+	echo -e "[mosh-options]"
+	echo -e "-pd\t--predict=adaptive      local echo for slower links [default]"
+	echo -e "-pa\t--predict=always        use local echo even on fast links"
+	echo -e "-pn\t--predict=never         never use local echo"
+	echo -e "-pe\t--predict=experimental  aggressively echo even when incorrect"
+	echo -e ""
+	echo -e "\t--ip=xxx.xxx.xxx.xxx    tell server IP to MOSH if it fails to find it"
+	echo -e "\t--get                   return session connection command instead of connecting"
+	echo -e ""
+	echo -e "Example: $0 ec2 -pe -v -p 2020"
+}
+
+if [ "--h" == "$*" ] || [ "--help" == "$*" ] || [ -z "$*" ] ; then
+	show_help
+	exit
+fi
+
+error() {
+	echo -e "MOSH: $*" >&2
+}
+
+# Set default value of arguments
+ARG_PREDICT="adaptive"
+ARG_IP=""
+ARG_SSH=""
+ARG_SERVER=""
+ARG_GET=false
+
+for i in "$@"
+do
+	case $i in
+		-pd|--predict=adaptive)
+			ARG_PREDICT="adaptive"
+		;;
+		-pa|--predict=always)
+			ARG_PREDICT="always"
+		;;
+		-pn|--predict=never)
+			ARG_PREDICT="never"
+		;;
+		-pe|--predict=experimental)
+			ARG_PREDICT="experimental"
+		;;
+		--ip=*)
+			ARG_IP="${i#*=}"
+		;;
+		--get)
+				ARG_GET=true
+		;;
+		*)
+			ARG_SSH="$ARG_SSH ${i#*=}"
+		;;
+	esac
+done
+
+
+if [ -n "$ARG_SSH" ]; then
+	ARG_SSH_ARRAY=($ARG_SSH)
+	ARG_SERVER=${ARG_SSH_ARRAY[0]}
+else
+	error "User/Hostname is missing. Exiting!"
+	exit 1
+fi
+
+if [ -n "$ARG_IP" ]; then
+	IP="$ARG_IP"
+else
+	if [[ "$ARG_SERVER" =~ .+@(.+) ]]; then
+		HOSTNAME="${BASH_REMATCH[1]}"
+	else
+		config=`cat ~/.ssh/config`
+		HOSTNAME=`echo "$config" | grep -Pizo "(?s)(^|\n)\s*Host $ARG_SERVER\n.*?\n\s*HostName.*?\n" | tail -n 2`
+		HOSTNAME=`echo "$HOSTNAME" | sed -r "s/.*HostName\s*//i"`
+	fi
+
+	if [ -z "$HOSTNAME" ]; then
+		error "Cannot find hostname. Please run with --ip=xxx.xxx.xxx.xxx. Exiting!"
+		exit 1
+	fi
+
+	if [[ $HOSTNAME =~ ^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$ ]]; then
+		IP="$HOSTNAME"
+	else
+		IP=`dig +short $HOSTNAME`
+	fi
+
+	if [ -z "$IP" ]; then
+		error "Cannot find IP address of server. Please run with --ip=xxx.xxx.xxx.xxx. Exiting!"
+		exit 1
+	fi
+fi
+
+
+SSH_COMMAND="ssh -t $ARG_SSH mosh-server new"
+SSH_OUTPUT=`$SSH_COMMAND`
+SSH_OUTPUT=`echo $SSH_OUTPUT | sed -r "s/\r|\n|//g" | sed -r "s/(^ *)|( *$)//g"`
+
+if ! [[ "$SSH_OUTPUT" == MOSH\ CONNECT\ * ]]; then
+	error ""
+	error "SSH Failed to server"
+
+	if [ -n "$SSH_OUTPUT" ]; then
+		error "$SSH_OUTPUT"
+	fi
+	exit 1
+fi
+
+MOSH_CONNECTION=($SSH_OUTPUT)
+MOSH_PORT=${MOSH_CONNECTION[2]}
+MOSH_KEY=${MOSH_CONNECTION[3]}
+
+if [ true == $ARG_GET ]; then
+	echo "MOSH_PREDICTION_DISPLAY=$ARG_PREDICT MOSH_KEY=$MOSH_KEY mosh-client $IP $MOSH_PORT"
+else
+	MOSH_PREDICTION_DISPLAY=$ARG_PREDICT MOSH_KEY=$MOSH_KEY mosh-client $IP $MOSH_PORT
+fi
