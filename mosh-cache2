@@ -4,7 +4,6 @@
 # Causes issue if you try to connect 30+ seconds later
 
 
-
 if [ "--h" == "$*" ] || [ "--help" == "$*" ] || [ -z "$*" ] ; then
 	mosh
 	exit
