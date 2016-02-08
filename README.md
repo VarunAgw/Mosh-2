@@ -4,7 +4,7 @@ A simple but powerful alternative frontend for Mosh
 ### Key Features
  - Simple and portable
  - Supports SSH command line arguments without any change
- - Created for speed. Supports SSH Multiplexing unlike original Mosh client.
+ - Developed for performance. Connect in as less as `~0.020s`.
  - Provides session caching for instant connection
 
 ### Requirements
@@ -19,27 +19,23 @@ A simple but powerful alternative frontend for Mosh
 #### Supports SSH command format
 In SSH you do `ec2 -v -p 2020`
 
-In Mosh you do: `mosh ec2 --ssh="-v -p 2020"`
+In Mosh you have to do: `mosh ec2 --ssh="-v -p 2020"`
 
 In Mosh 2 you can just do: `mosh ec2 -v -p 2020`
 
 ### Support SSH Multiplexing
-Original Mosh client disable SSH multiplexing with no way to enable it. With SSH multiplexing, you can reuse same TCP connection for further SSH connection to a server. Result is much faster connections.
-
-
+Original Mosh client disable SSH multiplexing with no workaround to enable it. With multiplexing, you can re-use existing TCP for multiple concurrent SSH sessions rather than creating a new one each time. Result is much faster connections.
     
 ```bash
 # Without SSH Multiplexing
-$ time ssh ec2 ls
-www apps
+$ time ssh ec2 ls >/dev/null
 
 real    0m1.965s
 user    0m0.016s
 sys     0m0.008s
 
 # With SSH Multiplexing
-$ time ssh ec2 ls
-www apps
+$ time ssh ec2 ls >/dev/null
 
 real    0m0.375s
 user    0m0.004s
@@ -54,14 +50,14 @@ Host *
         ControlPersist 5m
 ```
 
-
+For more information regarding Multiplexing, see [this] (https://en.wikibooks.org/wiki/OpenSSH/Cookbook/Multiplexing).
 
 ### Session caching
-It supports session caching. So a cached session will already be ready for you to access anytime. It can reduce session connection time to `~0.025s`
-To use it, just replace `mosh` with `mosh-cache` in your command.
+It supports caching of a new SSH session. So a new cached session will always be ready for you to access anytime. It can reduce session connection time to `~0.020s`
 
+To use this feature, just replace `mosh` with `mosh-cache` in your commands.
 
 #### Provide shortcode for `--predict=experimental`
-In Mosh you do: `mosh ec2 --predict=experimental`
+In Mosh you have to do: `mosh ec2 --predict=experimental`
 
 In Mosh 2 you can just do: `mosh ec2 -pe`
