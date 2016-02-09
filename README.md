@@ -4,7 +4,7 @@ A simple but powerful alternative frontend for Mosh
 ### Key Features
  - Simple and portable
  - Supports SSH command line arguments without any change
- - Developed for performance. Connect in as less as `~0.020s`.
+ - Developed for performance. Connect in as low as `~0.020s`.
  - Provides session caching for instant connection
 
 ### Requirements
