@@ -1,0 +1,20 @@
+#!/bin/bash
+
+
+###############################################################
+## Session caching module for Mosh 2                         ##
+##                                                           ##
+## Developed by Varun Agrawal (Varun@VarunAgw.com)           ##
+###############################################################
+
+# Kill cached SSH connection
+kill $(ps aux | grep "ssh:" | grep "\[mux\]" | awk '{print $2}') 2>/dev/null
+
+# Clean old detached session
+MOSH_SESSIONS=$(screen -ls | /bin/grep "mosh-")
+MOSH_SESSIONS=$(echo "$MOSH_SESSIONS" | grep "(Detached)")
+MOSH_SESSIONS=$(echo "$MOSH_SESSIONS" | grep -Po "[0-9]*\.mosh-[^\t]*")
+MOSH_SESSIONS=($MOSH_SESSIONS)
+for i in "${MOSH_SESSIONS[@]}"; do
+		screen -X -S $i quit
+done
