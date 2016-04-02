@@ -83,8 +83,8 @@ else
 		HOSTNAME="${BASH_REMATCH[1]}"
 	else
 		config=`cat ~/.ssh/config`
-		HOSTNAME=`echo "$config" | grep -Pizo "(?s)(^|\n)\s*Host $ARG_SERVER\n.*?\n\s*HostName.*?\n" | tail -n 2`
-		HOSTNAME=`echo "$HOSTNAME" | sed -r "s/.*HostName\s*//i"`
+		HOSTNAME=`echo "$config" | grep -Pizo "(?s)(^|\n)\s*Host.*?\s$ARG_SERVER(\s|\n).*?\n\s*HostName .*?\n" | tail -n 2`
+		HOSTNAME=`echo "$HOSTNAME" | sed -r "s/.*HostName\s*//i" | sed -r "s/\s+//i"`
 	fi
 
 	if [ -z "$HOSTNAME" ]; then
