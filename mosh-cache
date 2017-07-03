@@ -18,15 +18,17 @@ ARG="$*"
 MD5=`echo "$ARG" | md5sum`
 MD5=${MD5:0:15}
 
-
+# Check if a cached connection exist
 SCR=$(screen -ls | /bin/grep "mosh-$MD5.*(Detached)" | head -n 1)
 
 if [ -n "$SCR" ]; then
 	PID=`echo "$SCR" | grep -Po "[0-9]*\.mosh-[^\t]*"`
 fi
 
+
+# Run this part in background
 (
-	# Clean old detached session
+	# Clean old detached session (just some house cleaning)
 	DETACHED=$(screen -ls | /bin/grep "mosh-$MD5.*(Detached)" | tail -n +2)
 	DETACHED=`echo "$DETACHED" | grep -Po "[0-9]*\.mosh-[^\t]*"`
 	DETACHED=($DETACHED)
@@ -34,12 +36,14 @@ fi
 		screen -X -S $i quit
 	done
 
+	# Cache a connection for future use
 	screen -dmS "mosh-$MD5" sh -c "mosh $(echo "$@")"
-        NEW_SESSION=$(screen -ls | /bin/grep "mosh-$MD5.*(Detached)" | head -n 1 | grep -Po "[0-9]*\.mosh-[^\t]*")
-        screen -X -S $NEW_SESSION vbell off # Disable annoying visual Wuff...Wuff
+	NEW_SESSION=$(screen -ls | /bin/grep "mosh-$MD5.*(Detached)" | head -n 1 | grep -Po "[0-9]*\.mosh-[^\t]*")
+	screen -X -S $NEW_SESSION vbell off # Disable annoying visual Wuff...Wuff
 ) &
 
 
+# Use a cached connection if exist. Otherwise create new one
 if [ -n "$PID" ]; then
 	screen -X -S $PID vbell off
 	screen -r "$PID"
