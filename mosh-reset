@@ -18,3 +18,5 @@ MOSH_SESSIONS=($MOSH_SESSIONS)
 for i in "${MOSH_SESSIONS[@]}"; do
 		screen -X -S $i quit
 done
+
+echo "SUCCESS: Deleted all connections"
