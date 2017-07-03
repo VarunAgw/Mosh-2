@@ -83,7 +83,9 @@ else
 		HOSTNAME="${BASH_REMATCH[1]}"
 	else
 		config=`cat ~/.ssh/config`
-		HOSTNAME=`echo "$config" | grep -Pizo "(?s)(^|\n)\s*Host.*?\s$ARG_SERVER(\s|\n).*?\n\s*HostName .*?\n" | tail -n 2`
+		# grep -Po don't support ^. Prepending new line for Host on first line
+		HOSTNAME=`echo $'\n'"$config" | grep -Pizo "(?s)\n\s*Host.*?\s$ARG_SERVER(\s|\n).*?\n\s*HostName .*?\n"`
+		HOSTNAME=`echo "$HOSTNAME" | tail -n 1`
 		HOSTNAME=`echo "$HOSTNAME" | sed -r "s/.*HostName\s*//i" | sed -r "s/\s+//i"`
 	fi
 
