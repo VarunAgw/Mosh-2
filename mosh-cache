@@ -41,6 +41,7 @@ fi
 
 
 if [ -n "$PID" ]; then
+	screen -X -S $PID vbell off
 	screen -r "$PID"
 else
 	mosh "$@"
